@@ -1,16 +1,16 @@
 const express = require("express");
 const { generateToken, validateAdminToken } = require("./utils");
+const { v4: uuidv4 } = require("uuid"); // Import the v4 function from the uuid package
 const app = express();
 const port = 3001;
 
 app.use(express.json());
 
 const USERS = [];
-let userIdCounter = 0;
 
 const QUESTIONS = [
   {
-    id: 1,
+    id: "b80851c9-676e-4f83-82f4-6e152f37c9b2",
     title: "Two states",
     description: "Given an array, return the maximum of the array?",
     testCases: [
@@ -22,10 +22,7 @@ const QUESTIONS = [
   },
 ];
 
-let problemIdCounter = 1;
-
 const SUBMISSIONS = [];
-let submissionIdCounter = 0;
 
 app.post("/signup", function (req, res) {
   const { email, password } = req.body;
@@ -33,7 +30,7 @@ app.post("/signup", function (req, res) {
   if (userExists) {
     res.status(409).send("User with this email already exists.");
   } else {
-    const user = { id: ++userIdCounter, email, password };
+    const user = { id: uuidv4(), email, password }; // Generate a UUID for the user ID
     USERS.push(user);
     res.status(200).json(user);
   }
@@ -55,8 +52,8 @@ app.get("/questions", function (_, res) {
 });
 
 app.get("/submissions", function (req, res) {
-  const userId = parseInt(req.query.userId);
-  const problemId = parseInt(req.query.problemId);
+  const userId = req.query.userId;
+  const problemId = req.query.problemId;
 
   const userSubmissions = SUBMISSIONS.filter(
     (submission) =>
@@ -69,16 +66,14 @@ app.get("/submissions", function (req, res) {
 app.post("/submissions", function (req, res) {
   const { userId, problemId, solution } = req.body;
 
-  const user = USERS.find((user) => user.id === parseInt(userId));
+  const user = USERS.find((user) => user.id === userId);
   if (!user) {
     res.status(404).send("User not found.");
     return;
   }
 
   // Check if the question exists
-  const question = QUESTIONS.find(
-    (question) => question.id === parseInt(problemId)
-  );
+  const question = QUESTIONS.find((question) => question.id === problemId);
   if (!question) {
     res.status(404).send("Question not found.");
     return;
@@ -87,9 +82,9 @@ app.post("/submissions", function (req, res) {
   const isAccepted = Math.random() < 0.5;
 
   const submission = {
-    id: ++submissionIdCounter,
-    userId: parseInt(userId),
-    problemId: parseInt(problemId),
+    id: uuidv4(), // Generate a UUID for the submission ID
+    userId,
+    problemId,
     solution,
     isAccepted,
   };
@@ -113,7 +108,7 @@ app.post("/problems", function (req, res) {
     }
 
     const newProblem = {
-      id: ++problemIdCounter,
+      id: uuidv4(), // Generate a UUID for the problem ID
       ...problem,
     };
 
